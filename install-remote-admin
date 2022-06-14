@@ -3,7 +3,7 @@
 #
 # Create admin user on macOS client
 #
-# Usage: o0-o.sh [USERNAME]
+# Usage: install-remote-admin [USERNAME]
 #
 ########################################################################
 
