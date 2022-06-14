@@ -31,7 +31,7 @@ printf	'%s\n'								\
 	'************************************************************'	\
 	'By running this script, you agree to grant remote admin'	\
 	'privileges to DOTDIGITAL LLC who will use remote access to'	\
-	'administer this sytem.'					\
+	'administer this system.'					\
 	''								\
 	'Press any key to continue'
 
