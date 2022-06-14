@@ -17,6 +17,12 @@ set -eu
 set -o posix	||	true #for ZSH, BASH or KSH (fails in DASH)
 set -o pipefail	||	true #not strictly POSIX, but good to have
 
+# Escalate privileges if not root
+[ "$(whoami)" = "$(logname)" ]	||
+{	sudo	$0	&&
+	exit	0
+}
+
 # Disclaimer
 printf	'%s\n'								\
 	''								\
@@ -31,11 +37,6 @@ printf	'%s\n'								\
 
 read
 
-# Discover sudo/doas if needed
-[ "$(whoami)" = "$(logname)" ]			&&
-sudo=''						||
-sudo=$( which sudo )
-
 # Define username (o0-o by default)
 user_name="${1-o0-o}"
 
@@ -49,21 +50,21 @@ sudo_cfg_subdir_file_mode=0440
 sudo_grant_passwordless_admin='ALL=(ALL) NOPASSWD: ALL'
 
 # Create user
-$sudo	sysadminctl	-admin	-addUser	"$user_name"
+sysadminctl	-admin	-addUser	"$user_name"
 
 # Create sudoers.d directory
-sudo	touch	"${sudo_cfg_path}/sudoers.d"
+touch	"${sudo_cfg_path}/sudoers.d"
 
-sudo	chmod	"$sudo_cfg_subdir_mode"		\
-		"${sudo_cfg_path}/sudoers.d"
+chmod	"$sudo_cfg_subdir_mode"		\
+	"${sudo_cfg_path}/sudoers.d"
 
 # Grant user passwordless sudo
 printf	'%s\t%s\n'	"$user_name"				\
-			"$sudo_grant_passwordless_admin"	|
-sudo	tee	"${sudo_cfg_path}/sudoers.d/${user_name}"	1>/dev/null
+			"$sudo_grant_passwordless_admin"	\
+	1>>"${sudo_cfg_path}/sudoers.d/${user_name}"
 
-sudo	chmod	"$sudo_cfg_subdir_file_mode"			\
-		"${sudo_cfg_path}/sudoers.d/${user_name}"
+chmod	"$sudo_cfg_subdir_file_mode"			\
+	"${sudo_cfg_path}/sudoers.d/${user_name}"
 
 # Install SSH Key
 sudo	-u	"$user_name"		\
@@ -76,13 +77,13 @@ chmod	0700	"/Users/${user_name}/.ssh"
 
 sudo	-u	"$user_name"					\
 fgrep	-q	"$pub_key"					\
-		"/Users/${user_name}/.ssh/authorized_keys"	2>/dev/null ||
-echo	"$pub_key"						|
-sudo	tee	-a						\
-		"/Users/${user_name}/.ssh/authorized_keys"	1>/dev/null
+		"/Users/${user_name}/.ssh/authorized_keys"	\
+	2>/dev/null						||
+echo	"$pub_key"					\
+	1>>"/Users/${user_name}/.ssh/authorized_keys"
 
 # Enable SSH
-sudo	systemsetup	-setremotelogin	on	||
+systemsetup	-setremotelogin	on					||
 
 printf	'%s\n'								\
 	'************************************************************'	\
@@ -90,9 +91,14 @@ printf	'%s\n'								\
 	'************************************************************'	\
 	'Please grant the Terminal application full disk access'	\
 	'1. Go to: System Preferences > Security & Privacy > Privacy'	\
-	'2. On the left, scroll down to Full Disk Access'		\
-	'3. Click on Full Disk Access'					\
-	'4. Check the box next to the Terminal application icon'	\
-	'5. Run this script again'
+	'2. Click on the lock in the bottom left of the window'		\
+	'3. Authenticate to unlock'					\
+	'4. On the left, scroll down to Full Disk Access'		\
+	'5. Click on Full Disk Access'					\
+	'6. Click on the + button'					\
+	'7. Navigate to /Applications/Utilities'			\
+	'8. Select Terminal'						\
+	'9. Check the box next to the Terminal application icon'	\
+	'10. Run this script again'
 
 exit 0
